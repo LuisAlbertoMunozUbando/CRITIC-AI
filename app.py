@@ -16,6 +16,8 @@ KEY = os.getenv("LLM_API_KEY", "")
 TIMEOUT = float(os.getenv("LLM_TIMEOUT", "180"))
 MAX_CHARS = int(os.getenv("MAX_INPUT_CHARS", "16000"))
 
+LANGUAGES = {"es":"español","en":"English","fr":"français","it":"italiano","pt":"português","de":"Deutsch","zh":"中文（简体）","ja":"日本語","ru":"русский","ar":"العربية","he":"עברית","el":"ελληνικά"}
+
 STRATEGIES = {
     "auto": "Seleccion automática según la intención",
     "diagnostico": "Diagnóstico brutal de argumentos",
@@ -53,7 +55,7 @@ class GenerateRequest(BaseModel):
     idea: str = Field(min_length=5)
     strategy: str = "auto"
     depth: Literal["breve", "normal", "profundo"] = "profundo"
-    language: Literal["es", "en"] = "es"
+    language: Literal["es", "en", "fr", "it", "pt", "de", "zh", "ja", "ru", "ar", "he", "el"] = "es"
     context: str = ""
     second_pass: bool = True
 
@@ -111,6 +113,10 @@ async def health():
 async def strategies():
     return STRATEGIES
 
+@app.get("/api/languages")
+async def languages():
+    return LANGUAGES
+
 @app.get("/api/models")
 async def models():
     return {"models": await available_models(), "configured_model": MODEL or None}
@@ -130,9 +136,10 @@ async def generate(body: GenerateRequest):
         f"PROFUNDIDAD: {body.depth}. IDIOMA DE SALIDA: {body.language}.\n"
         "Construye un prompt claro, autocontenido, reutilizable, desafiante y verificable."
     )
-    first = await complete(model, SYSTEM, instruction, 2600 if body.depth == "profundo" else 1400)
+    language_rule = f"Write the ENTIRE output in {LANGUAGES[body.language]} (language code {body.language}). Keep this language throughout all sections; do not translate user-provided proper names. Output only the prompt. "
+    first = await complete(model, SYSTEM + "\n" + language_rule, instruction, 2600 if body.depth == "profundo" else 1400)
     final = first
     if body.second_pass:
-        final = await complete(model, REVIEW, first, 3000 if body.depth == "profundo" else 1600)
+        final = await complete(model, REVIEW + "\n" + language_rule, first, 3000 if body.depth == "profundo" else 1600)
     return {"prompt": final, "draft": first if body.second_pass else None,
             "model": model, "strategy": body.strategy, "passes": 2 if body.second_pass else 1}
