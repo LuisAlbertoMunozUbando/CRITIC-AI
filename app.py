@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 app = FastAPI(title="CRITIC-AI", version="0.1.0")
 ROOT = Path(__file__).resolve().parent
-BASE_URL = os.getenv("LLM_BASE_URL", "http://127.0.0.1:8000/v1").rstrip("/")
+BASE_URL = os.getenv("LLM_BASE_URL", "http://127.0.0.1:8001/v1").rstrip("/")
 MODEL = os.getenv("LLM_MODEL", "").strip()
 KEY = os.getenv("LLM_API_KEY", "")
 TIMEOUT = float(os.getenv("LLM_TIMEOUT", "180"))
