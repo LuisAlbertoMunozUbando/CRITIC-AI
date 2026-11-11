@@ -101,6 +101,10 @@ async def complete(model, system, user, max_tokens):
     except (KeyError, IndexError, TypeError, ValueError) as exc:
         raise HTTPException(502, "Respuesta no válida del servidor LLM") from exc
 
+@app.get("/static/logo.svg")
+async def logo():
+    return FileResponse(ROOT / "static" / "logo.svg", media_type="image/svg+xml")
+
 @app.get("/")
 async def home():
     return FileResponse(ROOT / "static" / "index.html")
