@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRITIC-AI · Spark GB10</title>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;color:#e9eef5;background:#101923}*{box-sizing:border-box}
+body{margin:0} main{max-width:1000px;margin:0 auto;padding:32px 20px}
+header{margin-bottom:28px}h1{font-size:clamp(30px,5vw,52px);margin:0;letter-spacing:-1.5px}
+h1 span{color:#8dcc43}p{color:#adbfcd;line-height:1.6}
+.panel{background:#172633;border:1px solid #2b4050;border-radius:16px;padding:24px;margin:18px 0}
+label{display:block;font-size:13px;font-weight:700;margin:15px 0 8px;color:#d0deeb}
+textarea,select{width:100%;background:#0f1c28;color:#fff;border:1px solid #385063;border-radius:9px;padding:13px;font:inherit}
+textarea{resize:vertical;min-height:120px}#context{min-height:70px}
+.controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+button{background:#8dcc43;color:#0e1a16;border:0;border-radius:9px;padding:12px 20px;font-weight:750;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}.ghost{background:#2a4050;color:#fff}
+.actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0e1c27;padding:18px;border-radius:9px;line-height:1.65;min-height:130px}
+small,#status{color:#9bb0c0}a{color:#b0dc76}.badge{color:#9fd252;font-size:12px;font-weight:bold}
+@media(max-width:680px){.controls{grid-template-columns:1fr}.panel{padding:16px}}
+</style>
+</head>
+<body><main>
+<header><div class="badge">100% INFERENCIA LOCAL · NVIDIA DGX SPARK</div><h1>CRITIC<span>-AI</span></h1>
+<p>De una idea simple a un prompt riguroso. Genera preguntas mejores, detecta supuestos y somete cada argumento a una revisión crítica.</p></header>
+<section class="panel">
+<label for="idea">¿Qué quieres investigar o cuestionar?</label>
+<textarea id="idea" maxlength="16000" placeholder="Ejemplo: Quiero evaluar si mi experimento demuestra que mi robot aprende a manipular mejor."></textarea>
+<label for="context">Contexto adicional (opcional)</label>
+<textarea id="context" placeholder="Objetivos, hipótesis, detalles de un experimento, restricciones..."></textarea>
+<div class="controls">
+<div><label for="strategy">Enfoque</label><select id="strategy"><option value="auto">Automático</option></select></div>
+<div><label for="depth">Profundidad</label><select id="depth"><option value="profundo">Profundo</option><option value="normal">Normal</option><option value="breve">Breve</option></select></div>
+<div><label for="language">Idioma</label><select id="language"><option value="es">Español</option><option value="en">English</option></select></div>
+</div>
+<label><input type="checkbox" id="second_pass" checked> Revisar y mejorar el prompt con una segunda pasada del LLM</label>
+<div class="actions"><button id="generate">Generar prompt mejorado</button><small id="status">Comprobando servidor local...</small></div>
+</section>
+<section class="panel">
+<div class="actions"><h2>Tu prompt optimizado</h2><div><button class="ghost" id="copy">Copiar</button> <button class="ghost" id="download">Descargar .txt</button></div></div>
+<pre id="output" aria-live="polite">El resultado aparecerá aquí.</pre>
+<small id="meta"></small>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let generated="";
+async function getJson(url,options){const r=await fetch(url,options);const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.detail||"Error HTTP "+r.status);return data}
+async function boot(){try{const [s,m]=await Promise.all([getJson("/api/strategies"),getJson("/api/models")]);for(const [key,val] of Object.entries(s)){if(key==="auto")continue;const o=document.createElement("option");o.value=key;o.textContent=val;$("strategy").append(o)}
+$("status").textContent="LLM disponible: "+(m.configured_model||m.models[0]||"sin modelo");}
+catch(e){$("status").textContent="LLM no disponible: "+e.message}}
+$("generate").onclick=async()=>{const idea=$("idea").value.trim();if(idea.length<5){$("status").textContent="Escribe una idea de al menos 5 caracteres.";return}
+$("generate").disabled=true;$("status").textContent="Generando localmente...";try{
+const result=await getJson("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idea,context:$("context").value,strategy:$("strategy").value,depth:$("depth").value,language:$("language").value,second_pass:$("second_pass").checked})});
+generated=result.prompt;$("output").textContent=generated;$("meta").textContent="Modelo: "+result.model+" · Pasadas: "+result.passes;$("status").textContent="Listo";
+}catch(e){$("status").textContent="Error: "+e.message}finally{$("generate").disabled=false}};
+$("copy").onclick=async()=>{if(generated)await navigator.clipboard.writeText(generated)};
+$("download").onclick=()=>{if(!generated)return;const a=document.createElement("a");const url=URL.createObjectURL(new Blob([generated],{type:"text/plain;charset=utf-8"}));a.href=url;a.download="critic-ai-prompt.txt";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+boot();
+</script></body></html>
