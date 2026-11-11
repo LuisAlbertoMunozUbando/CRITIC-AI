@@ -1,3 +1,4 @@
+from fastapi.staticfiles import StaticFiles
 import os
 import re
 from pathlib import Path
@@ -9,6 +10,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="CRITIC-AI", version="0.1.0")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 ROOT = Path(__file__).resolve().parent
 BASE_URL = os.getenv("LLM_BASE_URL", "http://127.0.0.1:8001/v1").rstrip("/")
 MODEL = os.getenv("LLM_MODEL", "").strip()
