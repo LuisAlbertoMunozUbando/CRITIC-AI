@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CRITIC-AI · Spark GB10</title>
+<title>CRITIC-AI · Spark GB10</title><link rel="icon" href="/static/logo.svg">
 <style>
 :root{font-family:Inter,system-ui,sans-serif;color:#e9eef5;background:#101923}*{box-sizing:border-box}
 body{margin:0} main{max-width:1000px;margin:0 auto;padding:32px 20px}
-header{margin-bottom:28px}h1{font-size:clamp(30px,5vw,52px);margin:0;letter-spacing:-1.5px}
+header{margin-bottom:28px}.brand{display:flex;align-items:center;gap:16px}.brand img{width:68px;height:68px}.tagline{font-weight:700;color:#8dcc43}h1{font-size:clamp(30px,5vw,52px);margin:0;letter-spacing:-1.5px}
 h1 span{color:#8dcc43}p{color:#adbfcd;line-height:1.6}
 .panel{background:#172633;border:1px solid #2b4050;border-radius:16px;padding:24px;margin:18px 0}
 label{display:block;font-size:13px;font-weight:700;margin:15px 0 8px;color:#d0deeb}
@@ -22,29 +22,44 @@ small,#status{color:#9bb0c0}a{color:#b0dc76}.badge{color:#9fd252;font-size:12px;
 </style>
 </head>
 <body><main>
-<header><div class="badge">100% INFERENCIA LOCAL · NVIDIA DGX SPARK</div><h1>CRITIC<span>-AI</span></h1>
+<header><div class="badge">100% INFERENCIA LOCAL · NVIDIA DGX SPARK</div><div class="brand"><img src="/static/logo.svg" alt="CRITIC-AI"><h1>CRITIC<span>-AI</span></h1></div><p class="tagline" data-i18n="tagline">Te ayuda a construir tu prompt</p>
 <p>De una idea simple a un prompt riguroso. Genera preguntas mejores, detecta supuestos y somete cada argumento a una revisión crítica.</p></header>
 <section class="panel">
-<label for="idea">¿Qué quieres investigar o cuestionar?</label>
+<label for="idea" data-i18n="idea">¿Qué quieres investigar o cuestionar?</label>
 <textarea id="idea" maxlength="16000" placeholder="Ejemplo: Quiero evaluar si mi experimento demuestra que mi robot aprende a manipular mejor."></textarea>
-<label for="context">Contexto adicional (opcional)</label>
+<label for="context" data-i18n="context">Contexto adicional (opcional)</label>
 <textarea id="context" placeholder="Objetivos, hipótesis, detalles de un experimento, restricciones..."></textarea>
 <div class="controls">
-<div><label for="strategy">Enfoque</label><select id="strategy"><option value="auto">Automático</option></select></div>
-<div><label for="depth">Profundidad</label><select id="depth"><option value="profundo">Profundo</option><option value="normal">Normal</option><option value="breve">Breve</option></select></div>
-<div><label for="language">Idioma</label><select id="language"><option value="es">Español</option><option value="en">English</option></select></div>
+<div><label for="strategy" data-i18n="strategy">Enfoque</label><select id="strategy"><option value="auto">Automático</option></select></div>
+<div><label for="depth" data-i18n="depth">Profundidad</label><select id="depth"><option value="profundo">Profundo</option><option value="normal">Normal</option><option value="breve">Breve</option></select></div>
+<div><label for="language" data-i18n="language">Idioma</label><select id="language"><option value="es">Español</option><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="pt">Português</option><option value="de">Deutsch</option><option value="zh">中文</option><option value="ja">日本語</option><option value="ru">Русский</option><option value="ar">العربية</option><option value="he">עברית</option><option value="el">Ελληνικά</option></select></div>
 </div>
 <label><input type="checkbox" id="second_pass" checked> Revisar y mejorar el prompt con una segunda pasada del LLM</label>
-<div class="actions"><button id="generate">Generar prompt mejorado</button><small id="status">Comprobando servidor local...</small></div>
+<div class="actions"><button id="generate" data-i18n="generate">Generar prompt mejorado</button><small id="status">Comprobando servidor local...</small></div>
 </section>
 <section class="panel">
-<div class="actions"><h2>Tu prompt optimizado</h2><div><button class="ghost" id="copy">Copiar</button> <button class="ghost" id="download">Descargar .txt</button></div></div>
+<div class="actions"><h2 data-i18n="result">Tu prompt optimizado</h2><div><button class="ghost" id="copy">Copiar</button> <button class="ghost" id="download">Descargar .txt</button></div></div>
 <pre id="output" aria-live="polite">El resultado aparecerá aquí.</pre>
 <small id="meta"></small>
 </section>
 </main>
 <script>
 const $=id=>document.getElementById(id);let generated="";
+const translations={
+es:["Te ayuda a construir tu prompt","¿Qué quieres investigar o cuestionar?","Contexto adicional (opcional)","Enfoque","Profundidad","Idioma","Generar prompt mejorado","Tu prompt optimizado"],
+en:["Helps you build your prompt","What would you like to investigate or challenge?","Additional context (optional)","Approach","Depth","Language","Generate improved prompt","Your optimized prompt"],
+fr:["Vous aide à construire votre prompt","Que souhaitez-vous examiner ou remettre en question ?","Contexte supplémentaire (facultatif)","Approche","Profondeur","Langue","Générer un prompt amélioré","Votre prompt optimisé"],
+it:["Ti aiuta a costruire il tuo prompt","Cosa vuoi indagare o mettere in discussione?","Contesto aggiuntivo (facoltativo)","Approccio","Profondità","Lingua","Genera prompt migliorato","Il tuo prompt ottimizzato"],
+pt:["Ajuda você a construir seu prompt","O que deseja investigar ou questionar?","Contexto adicional (opcional)","Abordagem","Profundidade","Idioma","Gerar prompt aprimorado","Seu prompt otimizado"],
+de:["Hilft dir, deinen Prompt zu erstellen","Was möchtest du untersuchen oder hinterfragen?","Zusätzlicher Kontext (optional)","Ansatz","Tiefe","Sprache","Verbesserten Prompt erstellen","Dein optimierter Prompt"],
+zh:["帮助你构建提示词","你想研究或质疑什么？","补充背景（可选）","方法","深度","语言","生成优化提示词","优化后的提示词"],
+ja:["プロンプト作成をサポート","何を調査・検証したいですか？","追加情報（任意）","アプローチ","深さ","言語","改善したプロンプトを生成","最適化されたプロンプト"],
+ru:["Помогает создавать промпты","Что вы хотите исследовать или проверить?","Дополнительный контекст (необязательно)","Подход","Глубина","Язык","Создать улучшенный промпт","Ваш оптимизированный промпт"],
+ar:["يساعدك على بناء مطالبتك","ما الذي تريد البحث فيه أو نقده؟","سياق إضافي (اختياري)","النهج","العمق","اللغة","إنشاء مطالبة محسّنة","مطالبتك المحسّنة"],
+he:["עוזר לך לבנות את הפרומפט שלך","מה תרצה לחקור או לבחון?","הקשר נוסף (אופציונלי)","גישה","עומק","שפה","צור פרומפט משופר","הפרומפט המשופר שלך"],
+el:["Σε βοηθά να δημιουργήσεις το prompt σου","Τι θέλεις να ερευνήσεις ή να αμφισβητήσεις;","Πρόσθετο πλαίσιο (προαιρετικό)","Προσέγγιση","Βάθος","Γλώσσα","Δημιουργία βελτιωμένου prompt","Το βελτιστοποιημένο prompt σου"]};
+function setLanguage(){const lang=$("language").value;const keys=["tagline","idea","context","strategy","depth","language","generate","result"];document.querySelectorAll("[data-i18n]").forEach(el=>{const i=keys.indexOf(el.dataset.i18n);if(i>=0)el.textContent=(translations[lang]||translations.es)[i]});document.documentElement.lang=lang;document.documentElement.dir=["ar","he"].includes(lang)?"rtl":"ltr";}
+$("language").addEventListener("change",setLanguage);setLanguage();
 async function getJson(url,options){const r=await fetch(url,options);const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.detail||"Error HTTP "+r.status);return data}
 async function boot(){try{const [s,m]=await Promise.all([getJson("/api/strategies"),getJson("/api/models")]);for(const [key,val] of Object.entries(s)){if(key==="auto")continue;const o=document.createElement("option");o.value=key;o.textContent=val;$("strategy").append(o)}
 $("status").textContent="LLM disponible: "+(m.configured_model||m.models[0]||"sin modelo");}
