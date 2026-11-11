@@ -1,4 +1,5 @@
 from fastapi.staticfiles import StaticFiles
+from consultation_log import record, start, stop
 import os
 import re
 from pathlib import Path
@@ -11,6 +12,14 @@ from pydantic import BaseModel, Field
 
 app = FastAPI(title="CRITIC-AI", version="0.1.0")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.on_event("startup")
+async def start_logging():
+    start()
+
+@app.on_event("shutdown")
+async def stop_logging():
+    stop()
 ROOT = Path(__file__).resolve().parent
 BASE_URL = os.getenv("LLM_BASE_URL", "http://127.0.0.1:8001/v1").rstrip("/")
 MODEL = os.getenv("LLM_MODEL", "").strip()
@@ -147,5 +156,11 @@ async def generate(body: GenerateRequest):
     final = first
     if body.second_pass:
         final = await complete(model, REVIEW + "\n" + language_rule, first, 3000 if body.depth == "profundo" else 1600)
-    return {"prompt": final, "draft": first if body.second_pass else None,
-            "model": model, "strategy": body.strategy, "passes": 2 if body.second_pass else 1}
+    result = {"prompt": final, "draft": first if body.second_pass else None,
+              "model": model, "strategy": body.strategy, "passes": 2 if body.second_pass else 1}
+    try:
+        record(body, result)
+    except Exception:
+        import logging
+        logging.exception("Could not record CRITIC-AI consultation")
+    return result
